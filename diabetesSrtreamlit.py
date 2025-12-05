@@ -9,60 +9,53 @@ if mode == "Dark":
     bg_color = "#0e1117"
     text_color = "#ffffff"
     card_color = "#161b22"
-    button_bg = "#4c8bf5"     # زر أزرق فاتح وواضح
+    button_bg = "#30363d"
     button_text = "#ffffff"
-    slider_color = "#4c8bf5"
 else:
     bg_color = "#f0f4f8"
     text_color = "#000000"
     card_color = "#ffffff"
     button_bg = "#1f77b4"
     button_text = "#ffffff"
-    slider_color = "#1f77b4"
 
 # ===================== CUSTOM CSS =====================
 st.markdown(f"""
 <style>
 body {{
-    background-color: {bg_color} !important;
+    background-color: {bg_color};
+    color: {text_color};
+}}
+h1, h2, h3, p, label {{
     color: {text_color} !important;
 }}
-
-h1, h2, h3, label, p, span {{
-    color: {text_color} !important;
-}}
-
 .stButton>button {{
     background-color: {button_bg} !important;
     color: {button_text} !important;
+    font-weight: bold;
     border-radius: 8px;
-    padding: 8px 20px;
-    border: none;
-    font-size: 16px;
 }}
-
-div[data-baseweb="slider"] > div {{
-    background-color: {card_color} !important;
+div[data-baseweb="slider"]>div>div {{
+    background: {card_color};
 }}
-
-div[data-baseweb="slider"] [role="slider"] {{
-    background-color: {slider_color} !important;
-}}
-
 </style>
 """, unsafe_allow_html=True)
 
 # ===================== TITLE =====================
 st.title("🩺 Diabetes Prediction App")
 
-# ===================== Load model =====================
+# ===================== LOAD MODEL =====================
 MODEL_PATH = "diabetes_model2.pkl"
 
 def load_model(path):
+    if not os.path.exists(path):
+        st.error(f"⚠️ Model file not found: {path}")
+        return None
     try:
         with open(path, "rb") as f:
-            return pickle.load(f)
-    except:
+            model = pickle.load(f)
+        return model
+    except Exception as e:
+        st.error(f"❌ Error loading model: {e}")
         return None
 
 model = load_model(MODEL_PATH)
@@ -87,14 +80,13 @@ if model:
         diabetes_pedigree_function = st.slider("Diabetes Pedigree Function", 0.0, 2.5, 0.5)
         age = st.slider("Age", 0, 120, 33)
 
-    # ===================== PREDICTION =====================
-    if st.button("Predict"):
-        input_data = [[
-            pregnancies, glucose, blood_pressure, skin_thickness,
-            insulin, bmi, diabetes_pedigree_function, age
-        ]]
-
-        prediction = model.predict(input_data)
+    # ===================== REAL-TIME PREDICTION =====================
+    input_data = [[
+        pregnancies, glucose, blood_pressure, skin_thickness,
+        insulin, bmi, diabetes_pedigree_function, age
+    ]]
+    
+    try:
         probabilities = model.predict_proba(input_data)[0]
         diabetic_prob = probabilities[1] * 100
 
@@ -102,16 +94,18 @@ if model:
         if diabetic_prob >= 70:
             bar_color = "red"
             risk = "High Risk"
+            advice = "⚠️ High risk! Please consult a doctor."
         elif diabetic_prob >= 40:
             bar_color = "orange"
             risk = "Medium Risk"
+            advice = "🟠 Medium risk. Improve diet and exercise."
         else:
             bar_color = "green"
             risk = "Low Risk"
+            advice = "🟢 Low risk. Keep healthy lifestyle!"
 
+        # ====== SHOW PROGRESS BAR ======
         st.write(f"### 🩸 Diabetes Probability: **{diabetic_prob:.2f}%** ({risk})")
-
-        # Progress bar
         st.markdown(f"""
         <div style="border-radius: 10px; height: 25px; background-color: #ddd;">
             <div style="width:{diabetic_prob}%; 
@@ -122,18 +116,17 @@ if model:
         </div>
         """, unsafe_allow_html=True)
 
-        # Result
+        # ====== RESULT TEXT ======
+        prediction = model.predict(input_data)
         if prediction[0] == 1:
             st.error("🧪 The model predicts: **Diabetic**")
         else:
             st.success("💚 The model predicts: **Non-Diabetic**")
 
-        # Advice
+        # ====== ADVICE ======
         st.markdown("---")
         st.subheader("📌 Advice")
-        if diabetic_prob >= 70:
-            st.write("⚠️ **High risk!** Please consult a doctor soon.")
-        elif diabetic_prob >= 40:
-            st.write("🟠 **Medium risk**. Improve diet & exercise.")
-        else:
-            st.write("🟢 **Low risk**. Keep up the healthy lifestyle!")
+        st.write(advice)
+
+    except Exception as e:
+        st.error(f"❌ Error during prediction: {e}")
