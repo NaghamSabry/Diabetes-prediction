@@ -6,7 +6,7 @@ import os
 import importlib
 import streamlit as st
 
-# قائمة المكتبات المطلوبة
+'''# قائمة المكتبات المطلوبة
 required_packages = ["streamlit", "scikit-learn", "pandas", "numpy"]
 
 missing_packages = []
@@ -25,7 +25,7 @@ else:
 
 import sys
 st.write(sys.executable)
-
+'''
 
 # ====== CSS style ======
 st.markdown("""
@@ -109,5 +109,6 @@ if model:
                 st.success("💚 Result: Non-Diabetic")
         except Exception as e:
             st.error(f"❌ Error during prediction: {e}")
+
 
 
