@@ -1,7 +1,6 @@
 # app_scaled.py
 import streamlit as st
 import pandas as pd
-import joblib
 import pickle
 
 # Load model and scaler
@@ -56,3 +55,4 @@ if st.button("Predict Risk"):
         st.error("⚠️ It is likely that you have diabetes. Please consult a doctor.")
     else:
         st.success("✅ You are unlikely to have diabetes, but regular check-ups are recommended.")
+
