@@ -6,7 +6,7 @@ import os
 mode = st.sidebar.radio("Theme", ["Light", "Dark"])
 
 if mode == "Dark":
-    bg_color = "#0e1117"
+    bg_color = "#000000"
     text_color = "#ffffff"
     card_color = "#161b22"
     button_bg = "#30363d"
@@ -98,3 +98,4 @@ st.markdown(f"""
 st.markdown("---")
 st.subheader("📌 Advice")
 st.write(advice)
+
