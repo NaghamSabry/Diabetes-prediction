@@ -1,58 +1,87 @@
-# app_scaled.py
+# diabetesStreamlit.py
 import streamlit as st
-import pandas as pd
 import pickle
+import os
 
-# Load model and scaler
-with open("diabetes_model2.pkl", "rb") as f:
-    model = pickle.load(f)
+# ====== CSS style ======
+st.markdown("""
+<style>
+body {
+    background-color: #f0f4f8;
+}
+h1 {
+    color: #1f77b4;
+    text-align: center;
+}
+.stButton>button {
+    background-color: #1f77b4;
+    color: white;
+    font-weight: bold;
+}
+.stNumberInput>div>div>input {
+    border-radius: 5px;
+}
+</style>
+""", unsafe_allow_html=True)
 
-with open("diabetes_scaler2.pkl", "rb") as f:
-    scaler = pickle.load(f)
+st.title("🩺 Diabetes Prediction App")
 
+MODEL_PATH = "diabetes_model2.pkl"
 
-st.title("Diabetes Risk Prediction (with Scaler)")
-st.write("Enter your health information to predict your risk of diabetes.")
+def load_model(path):
+    if not os.path.exists(path):
+        st.error(f"⚠️ Model file not found: {path}")
+        return None
+    try:
+        with open(path, "rb") as f:
+            model = pickle.load(f)
+        st.success("✅ Model loaded successfully!")
+        return model
+    except Exception as e:
+        st.error(f"❌ Error loading model: {e}")
+        return None
 
-# User inputs
-Pregnancies = st.number_input("Number of Pregnancies", 0, 20, 0)
-Glucose = st.number_input("Glucose Level", 0, 200, 120)
-BloodPressure = st.number_input("Blood Pressure (mm Hg)", 0, 140, 70)
-SkinThickness = st.number_input("Skin Thickness (mm)", 0, 100, 20)
-Insulin = st.number_input("Insulin Level (IU/ml)", 0, 900, 79)
-BMI = st.number_input("BMI", 0.0, 70.0, 20.0)
-DiabetesPedigreeFunction = st.number_input("Diabetes Pedigree Function", 0.0, 3.0, 0.5)
-Age = st.number_input("Age", 1, 120, 30)
+model = load_model(MODEL_PATH)
 
-# Convert inputs to DataFrame
-input_data = pd.DataFrame(
-    [[Pregnancies, Glucose, BloodPressure, SkinThickness, Insulin, BMI, DiabetesPedigreeFunction, Age]],
-    columns=['Pregnancies', 'Glucose', 'BloodPressure', 'SkinThickness', 'Insulin', 'BMI', 'DiabetesPedigreeFunction',
-             'Age'])
+if model:
+    st.subheader("Enter your details to predict diabetes:")
 
-# Apply scaler
-input_scaled = scaler.transform(input_data)
+    col1, col2, col3 = st.columns(3)
 
-# Predict button
-if st.button("Predict Risk"):
-    probability = model.predict_proba(input_scaled)[0][1]
-    probability_percent = round(probability * 100, 2)
+    with col1:
+        pregnancies = st.number_input("Pregnancies", min_value=0, max_value=20, value=0)
+        glucose = st.number_input("Glucose", min_value=0, max_value=200, value=120)
+        blood_pressure = st.number_input("Blood Pressure", min_value=0, max_value=150, value=70)
 
-    # Risk assessment
-    if probability < 0.3:
-        risk_level = "Low Risk"
-    elif probability < 0.7:
-        risk_level = "Medium Risk"
-    else:
-        risk_level = "High Risk"
+    with col2:
+        skin_thickness = st.number_input("Skin Thickness", min_value=0, max_value=100, value=20)
+        insulin = st.number_input("Insulin", min_value=0, max_value=900, value=79)
+        bmi = st.number_input("BMI", min_value=0.0, max_value=70.0, value=25.0)
 
-    # Display result
-    st.subheader("Prediction Result")
-    st.write(f"Probability of having diabetes: **{probability_percent}%**")
-    st.write(f"Risk Level: **{risk_level}**")
+    with col3:
+        diabetes_pedigree_function = st.number_input("Diabetes Pedigree Function", min_value=0.0, max_value=2.5, value=0.5)
+        age = st.number_input("Age", min_value=0, max_value=120, value=33)
 
-    if probability >= 0.5:
-        st.error("⚠️ It is likely that you have diabetes. Please consult a doctor.")
-    else:
-        st.success("✅ You are unlikely to have diabetes, but regular check-ups are recommended.")
-
+    if st.button("Predict"):
+        input_data = [[
+            pregnancies, glucose, blood_pressure, skin_thickness,
+            insulin, bmi, diabetes_pedigree_function, age
+        ]]
+        try:
+            # توقع الفئة
+            prediction = model.predict(input_data)
+            
+            # توقع الاحتمالات
+            probabilities = model.predict_proba(input_data)[0]  # [Non-Diabetic prob, Diabetic prob]
+            diabetic_prob = probabilities[1] * 100  # بالـ %
+            
+            st.write(f"💚 Probability of Non-Diabetic: {probabilities[0]*100:.2f}%")
+            st.write(f"🩸 Probability of Diabetic: {diabetic_prob:.2f}%")
+            
+            # النتيجة الرئيسية
+            if prediction[0] == 1:
+                st.error("🩸 Result: Diabetic")
+            else:
+                st.success("💚 Result: Non-Diabetic")
+        except Exception as e:
+            st.error(f"❌ Error during prediction: {e}")
