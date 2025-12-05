@@ -37,30 +37,34 @@ h1, h2, h3, p, label {{
 div[data-baseweb="slider"]>div>div {{
     background: {card_color};
 }}
+.stProgress > div > div > div {{
+    background-color: green;
+}}
 </style>
 """, unsafe_allow_html=True)
 
 # ===================== TITLE =====================
 st.title("🩺 Diabetes Prediction App")
 
-# ===================== Load model ( SILENT MODE ) =====================
+# ===================== Load model =====================
 MODEL_PATH = "diabetes_model2.pkl"
 
 def load_model(path):
+    if not os.path.exists(path):
+        st.error(f"⚠️ Model file not found: {path}")
+        return None
     try:
         with open(path, "rb") as f:
-            return pickle.load(f)
-    except:
+            model = pickle.load(f)
+        return model
+    except Exception as e:
+        st.error(f"❌ Error loading model: {e}")
         return None
 
 model = load_model(MODEL_PATH)
 
-# ===================== If model missing =====================
-if model is None:
-    st.error("❌ Model file not found. Please add the model file to the project folder.")
-else:
-
-    # ===================== INPUTS =====================
+# ===================== INPUTS =====================
+if model:
     st.subheader("Enter your details:")
 
     col1, col2, col3 = st.columns(3)
