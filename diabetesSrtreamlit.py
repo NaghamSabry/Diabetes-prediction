@@ -1,65 +1,65 @@
-# diabetesStreamlit.py
 import streamlit as st
 import pickle
 import os
 
-# ===== Global Style =====
+# =========================
+#     PAGE CONFIG
+# =========================
 st.set_page_config(page_title="Diabetes Prediction", page_icon="🩺", layout="wide")
 
-st.markdown("""
-<style>
-body {
-    background-color: #eef5f9;
-}
-h1 {
-    color: #2b6cb0;
-    text-align: center;
-}
-.result-box {
-    padding: 15px;
-    border-radius: 10px;
-    text-align: center;
-    font-size: 20px;
-    margin-top: 10px;
-}
-.success-box {
-    background-color: #c6f6d5;
-    color: #22543d;
-}
-.error-box {
-    background-color: #fed7d7;
-    color: #742a2a;
-}
-</style>
-""", unsafe_allow_html=True)
+# =========================
+#      THEME SWITCH
+# =========================
+mode = st.sidebar.selectbox("🌗 Choose Theme", ["Light Mode", "Dark Mode"])
 
+if mode == "Dark Mode":
+    st.markdown("""
+    <style>
+    body { background-color: #1e1e1e; color: white; }
+    .stProgress > div > div { background-color: #4caf50; }
+    </style>
+    """, unsafe_allow_html=True)
+else:
+    st.markdown("""
+    <style>
+    body { background-color: #eef5f9; }
+    </style>
+    """, unsafe_allow_html=True)
+
+# =========================
+#     PAGE TITLE
+# =========================
 st.title("🩺 Diabetes Prediction App")
 
 MODEL_PATH = "diabetes_model2.pkl"
 
-# ===== Load Model =====
+# =========================
+#     LOAD MODEL
+# =========================
 def load_model(path):
     if not os.path.exists(path):
         st.error(f"⚠️ Model file not found: {path}")
         return None
     try:
         with open(path, "rb") as f:
-            model = pickle.load(f)
-        return model
+            return pickle.load(f)
     except Exception as e:
         st.error(f"❌ Error loading model: {e}")
         return None
 
 model = load_model(MODEL_PATH)
 
-# ========== UI ==========
+# =========================
+#          FORM
+# =========================
 if model:
     st.subheader("➡️ Enter your details")
 
     col1, col2, col3 = st.columns(3)
 
+    # Pregnancies = ONLY +/− buttons
     with col1:
-        pregnancies = st.slider("Pregnancies", 0, 20, 1)
+        pregnancies = st.number_input("Pregnancies", min_value=0, max_value=20, value=0, step=1)
         glucose = st.slider("Glucose", 0, 200, 120)
         blood_pressure = st.slider("Blood Pressure", 0, 150, 70)
 
@@ -72,6 +72,9 @@ if model:
         diabetes_pedigree_function = st.slider("Diabetes Pedigree Function", 0.0, 2.5, 0.5)
         age = st.slider("Age", 0, 120, 33)
 
+    # =========================
+    #      PREDICT BUTTON
+    # =========================
     if st.button("🚀 Predict"):
         input_data = [[
             pregnancies, glucose, blood_pressure, skin_thickness,
@@ -81,38 +84,27 @@ if model:
         try:
             prediction = model.predict(input_data)
             probabilities = model.predict_proba(input_data)[0]
-            diabetic_prob = probabilities[1] * 100
-            non_diabetic_prob = probabilities[0] * 100
 
-            # ===== Probability Bars =====
+            diabetic_prob = round(probabilities[1] * 100, 2)
+            non_diabetic_prob = round(probabilities[0] * 100, 2)
+
             st.subheader("📊 Prediction Probability")
 
-            st.write("💚 Non-Diabetic Probability")
+            # ========= Non-Diabetic Bar =========
+            st.write(f"💚 Non-Diabetic: **{non_diabetic_prob}%**")
             st.progress(int(non_diabetic_prob))
 
-            st.write("🩸 Diabetic Probability")
+            # ========= Diabetic Bar =========
+            st.write(f"🩸 Diabetic: **{diabetic_prob}%**")
             st.progress(int(diabetic_prob))
 
-            # ===== Result Box =====
+            # ========= Result Box + Advice =========
             if prediction[0] == 1:
-                st.markdown(f"""
-                <div class="result-box error-box">
-                    🩸 <b>Result: Diabetic</b><br>
-                    Please consider consulting a healthcare specialist for further evaluation.
-                </div>
-                """, unsafe_allow_html=True)
-
-                st.info("💡 **Tip:** Maintaining a healthy diet, regular exercise, and monitoring glucose levels can significantly reduce risks.")
-
+                st.error("🩸 **Result: Diabetic**")
+                st.info("💡 Tip: Try regular exercise, reducing sugar intake, and checking blood glucose levels.")
             else:
-                st.markdown(f"""
-                <div class="result-box success-box">
-                    💚 <b>Result: Non-Diabetic</b><br>
-                    Great job! Keep up your healthy lifestyle.
-                </div>
-                """, unsafe_allow_html=True)
-
-                st.success("💡 **Tip:** Continue staying active and eating balanced meals to maintain good health!")
+                st.success("💚 **Result: Non-Diabetic**")
+                st.info("💡 Tip: Keep a balanced diet, stay active, and maintain a healthy lifestyle!")
 
         except Exception as e:
             st.error(f"❌ Error during prediction: {e}")
