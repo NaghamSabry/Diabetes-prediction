@@ -2,6 +2,27 @@
 import streamlit as st
 import pickle
 import os
+# check_requirements.py
+import importlib
+import streamlit as st
+
+# قائمة المكتبات المطلوبة
+required_packages = ["streamlit", "scikit-learn", "pandas", "numpy"]
+
+missing_packages = []
+
+for pkg in required_packages:
+    if importlib.util.find_spec(pkg) is None:
+        missing_packages.append(pkg)
+
+if missing_packages:
+    st.error(f"❌ Missing packages: {', '.join(missing_packages)}")
+    st.info("Please install them in your current environment:")
+    for pkg in missing_packages:
+        st.code(f"pip install {pkg}")
+else:
+    st.success("✅ All required packages are installed!")
+
 import sys
 st.write(sys.executable)
 
@@ -88,4 +109,5 @@ if model:
                 st.success("💚 Result: Non-Diabetic")
         except Exception as e:
             st.error(f"❌ Error during prediction: {e}")
+
 
