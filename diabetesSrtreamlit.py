@@ -37,18 +37,6 @@ st.title("🩺 Diabetes Prediction App")
 
 MODEL_PATH = "diabetes_model2.pkl"
 
-def load_model(path):
-    if not os.path.exists(path):
-        st.error(f"⚠️ Model file not found: {path}")
-        return None
-    try:
-        with open(path, "rb") as f:
-            model = pickle.load(f)
-        st.success("✅ Model loaded successfully!")
-        return model
-    except Exception as e:
-        st.error(f"❌ Error loading model: {e}")
-        return None
 
 model = load_model(MODEL_PATH)
 
@@ -127,3 +115,4 @@ if model:
 
         except Exception as e:
             st.error(f"❌ Error during prediction: {e}")
+
