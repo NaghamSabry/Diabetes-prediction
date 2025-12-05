@@ -2,6 +2,31 @@ import streamlit as st
 import pickle
 import os
 
+# ============================ #
+#       UI THEME CONTROL       #
+# ============================ #
+
+# Toggle for Dark / Light mode
+mode = st.sidebar.radio("Theme Mode", ["Light Mode", "Dark Mode"])
+
+if mode == "Dark Mode":
+    st.markdown("""
+    <style>
+    body { background-color: #111 !important; }
+    .stApp { background-color: #111 !important; color: white !important; }
+    </style>
+    """, unsafe_allow_html=True)
+else:
+    st.markdown("""
+    <style>
+    body { background-color: #f5f7fa !important; }
+    .stApp { background-color: #f5f7fa !important; color: black !important; }
+    </style>
+    """, unsafe_allow_html=True)
+
+# ============================ #
+#        Page Settings         #
+# ============================ #
 st.set_page_config(
     page_title="Diabetes Prediction App",
     page_icon="🩺",
@@ -26,6 +51,10 @@ def load_model(path):
         return None
 
 model = load_model(MODEL_PATH)
+
+# ============================ #
+#          Main App           #
+# ============================ #
 
 if model:
     st.subheader("Enter your details:")
@@ -59,18 +88,42 @@ if model:
             diabetic_prob = round(probabilities[1] * 100, 2)
 
             st.subheader("📊 Diabetes Probability")
-            st.write(f"🩸 **Probability of Diabetic: {diabetic_prob}%**")
-            st.progress(int(diabetic_prob))
 
+            # Determine bar color
             if diabetic_prob >= 70:
-                st.error("🔥 **Risk Level: HIGH RISK**")
-                st.info("💡 Immediate lifestyle changes are recommended. Please consult your doctor.")
+                bar_color = "red"
+                level = "HIGH RISK"
             elif diabetic_prob >= 40:
-                st.warning("🟠 **Risk Level: MEDIUM RISK**")
-                st.info("💡 Maintain a healthy lifestyle and monitor your glucose levels.")
+                bar_color = "orange"
+                level = "MEDIUM RISK"
             else:
-                st.success("🟢 **Risk Level: LOW RISK**")
-                st.info("💡 You are in a good range. Keep up your healthy habits!")
+                bar_color = "green"
+                level = "LOW RISK"
+
+            # Colored progress bar (custom HTML)
+            st.markdown(f"""
+                <div style="border-radius: 8px; width: 100%; background-color: #ddd;">
+                    <div style="
+                        width: {diabetic_prob}%;
+                        background-color: {bar_color};
+                        padding: 10px;
+                        color: white;
+                        border-radius: 8px;
+                        text-align: center;">
+                        {diabetic_prob}%
+                    </div>
+                </div>
+            """, unsafe_allow_html=True)
+
+            st.write(f"📌 **Risk Level: {level}**")
+
+            # Advice
+            if level == "HIGH RISK":
+                st.error("🔥 You are at **high risk**. Please consult a doctor soon.")
+            elif level == "MEDIUM RISK":
+                st.warning("🟠 Medium risk. Maintain healthy habits & monitor your sugar.")
+            else:
+                st.success("🟢 Low risk. Keep up the great lifestyle!")
 
         except Exception as e:
             st.error(f"❌ Error during prediction: {e}")
