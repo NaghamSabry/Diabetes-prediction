@@ -2,6 +2,9 @@
 import streamlit as st
 import pickle
 import os
+import sys
+st.write(sys.executable)
+
 
 # ====== CSS style ======
 st.markdown("""
@@ -85,3 +88,4 @@ if model:
                 st.success("💚 Result: Non-Diabetic")
         except Exception as e:
             st.error(f"❌ Error during prediction: {e}")
+
